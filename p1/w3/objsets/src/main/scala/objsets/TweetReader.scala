@@ -54,7 +54,7 @@ object TweetReader {
   private val gadgetlabTweets = TweetReader.ParseTweets.getTweetData("gadgetlab", TweetData.gadgetlab)
   private val mashableTweets = TweetReader.ParseTweets.getTweetData("mashable", TweetData.mashable)
   
-  private val sources = List(gizmodoTweets, techCrunchTweets, engadgetTweets, amazondealsTweets, cnetTweets, gadgetlabTweets, mashableTweets)
+  val sources = List(gizmodoTweets, techCrunchTweets, engadgetTweets, amazondealsTweets, cnetTweets, gadgetlabTweets, mashableTweets)
 
   val tweetMap: Map[String, List[Tweet]] =
     Map() ++ Seq((sites(0) -> gizmodoTweets),

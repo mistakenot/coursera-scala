@@ -19,3 +19,6 @@ project/plugins/project/
 # ENSIME specific
 .ensime_cache/
 .ensime
+
+# Intelli J
+.idea

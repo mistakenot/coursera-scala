@@ -2,7 +2,6 @@ package objsets
 
 import org.scalatest.FunSuite
 
-
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
@@ -71,4 +70,28 @@ class TweetSetSuite extends FunSuite {
     }
   }
 
+  test("filter: tweet with 321 retweets") {
+    val filtered = TweetReader.allTweets.filter(_.retweets == 321)
+    assert(!filtered.isEmpty)
+    assert(filtered.mostRetweeted.retweets == 321)
   }
+
+  test("google tweets") {
+    assert(!GoogleVsApple.googleTweets.isEmpty)
+  }
+
+  test("apple tweets") {
+    assert(!GoogleVsApple.appleTweets.isEmpty)
+  }
+
+  test("trending google or apple tweets") {
+    assert(!GoogleVsApple.trending.isEmpty)
+  }
+
+  test("most retweeted of all") {
+    val mostRetweetedExpected = TweetReader.sources.flatten.maxBy(_.retweets)
+    val mostRetweetedActual = TweetReader.allTweets.mostRetweeted
+    assert(mostRetweetedExpected.retweets == mostRetweetedActual.retweets)
+  }
+
+}
