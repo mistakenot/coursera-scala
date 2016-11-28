@@ -79,6 +79,8 @@ class FunSetSuite extends FunSuite {
     val s3 = singletonSet(3)
 
     val s1and2: Set = s => s == 1 || s == 2
+
+    val allInts: Set = s => true
   }
 
   /**
@@ -163,6 +165,13 @@ class FunSetSuite extends FunSuite {
       assert(forall(s, s => s == 3 || s == 6))
       assert(!contains(s, 1))
       assert(!contains(s, 2))
+    }
+  }
+
+  test("map of all numbers should only return even numbers") {
+    new TestSets {
+      val s = map(allInts, _ * 2)
+      assert(forall(s, _ % 2 == 0))
     }
   }
 
