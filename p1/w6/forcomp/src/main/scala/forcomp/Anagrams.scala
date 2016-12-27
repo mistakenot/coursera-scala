@@ -34,15 +34,15 @@ object Anagrams {
    *
    *  Note: you must use `groupBy` to implement this method!
    */
-  def wordOccurrences(w: Word): Occurrences = 
+  def wordOccurrences(w: Word): Occurrences =
     w.groupBy(_.toLower)
       .map { case (c, s) => (c, s.length) }
       .toList
       .sorted
 
   /** Converts a sentence into its character occurrence list. */
-  def sentenceOccurrences(s: Sentence): Occurrences = s.flatMap(wordOccurrences(_)).sorted
-      
+  def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s.mkString)
+
 
   /** The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
    *  the words that have that occurrence count.
@@ -91,7 +91,7 @@ object Anagrams {
     case (headChar, headCount) :: tail => {
       for {
         headCombs <- (0 to headCount).map(i => if (i == 0) List() else List((headChar, i))).toList
-        tailCombs <- combinations(tail) } 
+        tailCombs <- combinations(tail) }
         yield headCombs ++ tailCombs
     }
   }
@@ -107,7 +107,7 @@ object Anagrams {
    */
   def subtract(x: Occurrences, y: Occurrences): Occurrences = y match {
     case Nil => x
-    case (yChar, yCount) :: tail => { 
+    case (yChar, yCount) :: tail => {
       val subtracted = x map { case (k, v) => if (k == yChar) (k, v - yCount) else (k, v) }
       subtract(subtracted, tail) filter { case (k, v) => v != 0 }
     }
@@ -158,21 +158,35 @@ object Anagrams {
     def inner(occurrence: Occurrences, thisSentence: List[Word]): List[Sentence] = {
       if (occurrence.isEmpty) List(thisSentence) // We have made a complete sentence. Return result.
       else {
-        val possibleNextWords = combinations(occurrence)
-          .filter(w => dictionaryByOccurrences.contains(w) && !thisSentence.contains(w)).map(dictionaryByOccurrences(_))
+        val allSubsets = combinations(occurrence)
+        val allSubsetWords: List[Word] = allSubsets
+          .filter(dictionaryByOccurrences.contains(_))
+          .flatMap(dictionaryByOccurrences(_))
+
+        val allDistinctUnusedWords = allSubsetWords.distinct.filter(w => !thisSentence.contains(w))
+
+        val possibleNextWords: List[Word] = combinations(occurrence) // Of all subsets of occurence
+          .filter(occ => dictionaryByOccurrences.contains(occ)) // Take only the ones that have dic words
+          .flatMap(dictionaryByOccurrences(_)) // Take all of those words
+          .filter(word => thisSentence.forall(_ != word)) // Excluding ones that have already been used
+          .distinct
+
         if (possibleNextWords.isEmpty)
           return Nil  // No possible next words can be made
         else {
-          possibleNextWords.flatMap(w => {
+          val result = possibleNextWords.flatMap((w: Word) => {
             val remainer = subtract(occurrence, wordOccurrences(w))
-            inner(remainer, thisSentence +: w)
-          }).filter(!_.isEmpty)
+            inner(remainer, thisSentence ++ List(w))
+          })
+          .filter(!_.isEmpty)
 
+          result
         }
       }
     }
 
-    inner(sentenceOccurrences(sentence), List())
+    val allOccurrences = sentenceOccurrences(sentence)
+    inner(allOccurrences, List())
   }
-  
+
 }
