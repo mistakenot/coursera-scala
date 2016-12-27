@@ -154,39 +154,17 @@ object Anagrams {
    *  Note: There is only one anagram of an empty sentence.
    */
   def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
-
-    def inner(occurrence: Occurrences, thisSentence: List[Word]): List[Sentence] = {
-      if (occurrence.isEmpty) List(thisSentence) // We have made a complete sentence. Return result.
-      else {
-        val allSubsets = combinations(occurrence)
-        val allSubsetWords: List[Word] = allSubsets
-          .filter(dictionaryByOccurrences.contains(_))
-          .flatMap(dictionaryByOccurrences(_))
-
-        val allDistinctUnusedWords = allSubsetWords.distinct.filter(w => !thisSentence.contains(w))
-
-        val possibleNextWords: List[Word] = combinations(occurrence) // Of all subsets of occurence
-          .filter(occ => dictionaryByOccurrences.contains(occ)) // Take only the ones that have dic words
-          .flatMap(dictionaryByOccurrences(_)) // Take all of those words
-          .filter(word => thisSentence.forall(_ != word)) // Excluding ones that have already been used
-          .distinct
-
-        if (possibleNextWords.isEmpty)
-          return Nil  // No possible next words can be made
-        else {
-          val result = possibleNextWords.flatMap((w: Word) => {
-            val remainer = subtract(occurrence, wordOccurrences(w))
-            inner(remainer, thisSentence ++ List(w))
-          })
-          .filter(!_.isEmpty)
-
-          result
-        }
-      }
+    def inner(occurrences: Occurrences): List[Sentence] = {
+      if (occurrences.isEmpty) List(Nil)
+      else for {
+        subsetOccurrences <- combinations(occurrences)
+        subsetWord <- dictionaryByOccurrences.getOrElse(subsetOccurrences, Nil)
+        remainderSentence <- inner(subtract(occurrences, wordOccurrences(subsetWord)))
+        if !subsetOccurrences.isEmpty
+      } yield subsetWord :: remainderSentence
     }
 
-    val allOccurrences = sentenceOccurrences(sentence)
-    inner(allOccurrences, List())
+    inner(sentenceOccurrences(sentence))
   }
 
 }
