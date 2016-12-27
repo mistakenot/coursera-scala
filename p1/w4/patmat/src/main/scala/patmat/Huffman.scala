@@ -104,11 +104,9 @@ object Huffman {
    * of a leaf is the frequency of the character.
    */
   def makeOrderedLeafList(freqs: List[(Char, Int)]): List[Leaf] =
-    if (freqs.isEmpty) List()
-    else {
-      val common = lastCommon(freqs)
-      Leaf(common._1, common._2) :: makeOrderedLeafList(remove (common._1, freqs))
-    }
+    freqs.sortWith {
+      case ((_, w1), (_, w2)) => w1 < w2
+    } map (cw => Leaf(cw._1, cw._2))
 
   /**
    * Checks whether the list `trees` contains only one single code tree.
@@ -155,7 +153,7 @@ object Huffman {
    *    the example invocation. Also define the return type of the `until` function.
    *  - try to find sensible parameter names for `xxx`, `yyy` and `zzz`.
    */
-  def until(predicate: List[CodeTree] => Boolean, aggregate: List[CodeTree] => List[CodeTree])(trees: List[CodeTree]): List[CodeTree] = 
+  def until(predicate: List[CodeTree] => Boolean, aggregate: List[CodeTree] => List[CodeTree])(trees: List[CodeTree]): List[CodeTree] =
     if (predicate(trees)) trees
     else until(predicate, aggregate)(aggregate(trees))
 
@@ -275,7 +273,7 @@ object Huffman {
     * use it in the `convert` method above, this merge method might also do some transformations
     * on the two parameter code tables.
     */
-  def mergeCodeTables(a: CodeTable, b: CodeTable): CodeTable = 
+  def mergeCodeTables(a: CodeTable, b: CodeTable): CodeTable =
     a.map { case (c, path) => (c, 0 :: path) } ::: b.map { case (c, path) => (c, 1 :: path) }
 
   /**
