@@ -77,4 +77,49 @@ class BloxorzSuite extends FunSuite {
     }
   }
 
+  test("neighboursWithHistory") {
+    new Level1 {
+      val start = Block(Pos(0, 0), Pos(0, 0))
+      val stream = neighborsWithHistory(start, List.empty)
+
+      val fst = stream.head
+      assert(fst._1 == Block(Pos(0, 1), Pos(0, 2)))
+      assert(fst._2 == List(Right))
+
+      val scnd = stream.tail.head
+      assert(scnd._1 == Block(Pos(1, 0), Pos(2, 0)))
+      assert(scnd._2 == List(Down))
+      
+      val streamTwo = neighborsWithHistory(scnd._1, scnd._2)
+      val thrd = streamTwo.head 
+      assert(thrd._1 == Block(Pos(1, 1), Pos(2, 1)))
+      assert(thrd._2 == List(Down, Right))
+    }
+  }
+
+  test("pathsFromStart") {
+    /* y1234567
+    x |ooo-------
+    1 |oSoooo----
+    2 |ooooooooo-
+    3 |-ooooooooo
+    4 |-----ooToo
+    5 |------ooo-*/
+
+    new Level1 {
+      val stream = pathsFromStart
+
+      val fst = stream.head
+      assert(fst._1 == Block(Pos(1, 2), Pos(1, 3)))
+      assert(fst._2 == List(Right))
+
+      val scnd = stream.tail.head
+      assert(scnd._1 == Block(Pos(2, 1), Pos(3, 1)))
+      assert(scnd._2 == List(Down))
+
+      val thrd = stream.tail.tail.head
+      assert(thrd == (Block(Pos(1, 4), Pos(1, 4)), List(Right, Right)))
+    }
+  }
+
 }
