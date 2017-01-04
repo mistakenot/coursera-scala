@@ -29,7 +29,7 @@ trait Solver extends GameDef {
    * that are inside the terrain.
    */
   def neighborsWithHistory(b: Block, history: List[Move]): Stream[(Block, List[Move])] =
-    for((block, move) <- b.legalNeighbors.toStream) yield (block, history :+ move)
+    for((block, move) <- b.legalNeighbors.toStream) yield (block, move :: history)
 
   /**
    * This function returns the list of neighbors without the block
@@ -93,6 +93,6 @@ trait Solver extends GameDef {
    */
   lazy val solution: List[Move] = pathsToGoal match {
     case Stream.Empty => List()
-    case (_, moves) #:: _ => moves
+    case (_, moves) #:: _ => moves.reverse
   }
 }

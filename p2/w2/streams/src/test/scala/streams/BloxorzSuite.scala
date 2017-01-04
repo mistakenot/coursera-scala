@@ -16,7 +16,8 @@ class BloxorzSuite extends FunSuite {
      * `startPos`. This can be used to verify if a certain list of moves
      * is a valid solution, i.e. leads to the goal.
      */
-    def solve(ls: List[Move]): Block =
+    def solve(ls: List[Move]): Block = {
+      println(ls)
       ls.foldLeft(startBlock) { case (block, move) =>
         require(block.isLegal) // The solution must always lead to legal blocks
         move match {
@@ -25,6 +26,7 @@ class BloxorzSuite extends FunSuite {
           case Up => block.up
           case Down => block.down
         }
+    }
     }
   }
 
@@ -93,7 +95,7 @@ class BloxorzSuite extends FunSuite {
       val streamTwo = neighborsWithHistory(scnd._1, scnd._2)
       val thrd = streamTwo.head 
       assert(thrd._1 == Block(Pos(1, 1), Pos(2, 1)))
-      assert(thrd._2 == List(Down, Right))
+      assert(thrd._2 == List(Right, Down))
     }
   }
 
