@@ -89,5 +89,29 @@ class BlurSuite extends FunSuite {
     check(3, 2, 6)
   }
 
+  test("HorizontalBoxBlur.parBlur with radius 2 should correctly blur the entire 4x3 image") {
+    val w = 3
+    val h = 3
+    val src = new Img(w, h)
+    val dst = new Img(w, h)
+    src(0, 0) = 0; src(1, 0) = 1; src(2, 0) = 2
+    src(0, 1) = 3; src(1, 1) = 4; src(2, 1) = 5
+    src(0, 2) = 6; src(1, 2) = 7; src(2, 2) = 8
+
+    assert(HorizontalBoxBlur.parBlur(src, dst, 3, 2) === HorizontalBoxBlur.blur(src, dst, 0, 2, 1))
+  }
+
+  test("VerticalBoxBlur.parBlur with radius 2 should correctly blur the entire " +
+    "4x3 image") {
+    val w = 4
+    val h = 3
+    val src = new Img(w, h)
+    val dst = new Img(w, h)
+    src(0, 0) = 0; src(1, 0) = 1; src(2, 0) = 2; src(3, 0) = 9
+    src(0, 1) = 3; src(1, 1) = 4; src(2, 1) = 5; src(3, 1) = 10
+    src(0, 2) = 6; src(1, 2) = 7; src(2, 2) = 8; src(3, 2) = 11
+
+    assert(VerticalBoxBlur.parBlur(src, dst, 4, 2) === VerticalBoxBlur.blur(src, dst, 0, 4, 2))
+  }
 
 }
