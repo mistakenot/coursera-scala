@@ -89,7 +89,7 @@ class BlurSuite extends FunSuite {
     check(3, 2, 6)
   }
 
-  test("HorizontalBoxBlur.parBlur with radius 2 should correctly blur the entire 4x3 image") {
+  test("HorizontalBoxBlur.parBlur with radius 1 should correctly blur the entire 3x3 image") {
     val w = 3
     val h = 3
     val src = new Img(w, h)
@@ -98,7 +98,21 @@ class BlurSuite extends FunSuite {
     src(0, 1) = 3; src(1, 1) = 4; src(2, 1) = 5
     src(0, 2) = 6; src(1, 2) = 7; src(2, 2) = 8
 
-    assert(HorizontalBoxBlur.parBlur(src, dst, 3, 2) === HorizontalBoxBlur.blur(src, dst, 0, 2, 1))
+    HorizontalBoxBlur.parBlur(src, dst, 3, 1)
+
+    def check(x: Int, y: Int, expected: Int) =
+      assert(dst(x, y) == expected,
+        s"(destination($x, $y) should be $expected)")
+
+    check(0, 0, 2)
+    check(1, 0, 2)
+    check(2, 0, 3)
+    check(0, 1, 3)
+    check(1, 1, 4)
+    check(2, 1, 4)
+    check(0, 2, 0)
+    check(1, 2, 0)
+    check(2, 2, 0)
   }
 
   test("VerticalBoxBlur.parBlur with radius 2 should correctly blur the entire " +
@@ -111,7 +125,43 @@ class BlurSuite extends FunSuite {
     src(0, 1) = 3; src(1, 1) = 4; src(2, 1) = 5; src(3, 1) = 10
     src(0, 2) = 6; src(1, 2) = 7; src(2, 2) = 8; src(3, 2) = 11
 
-    assert(VerticalBoxBlur.parBlur(src, dst, 4, 2) === VerticalBoxBlur.blur(src, dst, 0, 4, 2))
+    VerticalBoxBlur.parBlur(src, dst, 3, 2)
+
+    def check(x: Int, y: Int, expected: Int) =
+      assert(dst(x, y) == expected,
+        s"(destination($x, $y) should be $expected)")
+
+    check(0, 0, 4)
+    check(1, 0, 5)
+    check(2, 0, 5)
+    check(3, 0, 6)
+    check(0, 1, 4)
+    check(1, 1, 5)
+    check(2, 1, 5)
+    check(3, 1, 6)
+    check(0, 2, 4)
+    check(1, 2, 5)
+    check(2, 2, 5)
+    check(3, 2, 6)
   }
+
+  test("HorizontalBoxBlur.parBlur using 32 tasks on a 64x32 image should complete") {
+    val w = 64
+    val h = 32
+    val src = new Img(w, h)
+    val dst = new Img(w, h)
+
+    HorizontalBoxBlur.parBlur(src, dst, 32, 2)
+  }
+
+  test("VerticalBoxBlur.parBlur with 32 tasks on a 32x64 image should complete") {
+    val w = 32
+    val h = 64
+    val src = new Img(w, h)
+    val dst = new Img(w, h)
+
+    VerticalBoxBlur.parBlur(src, dst, 32, 1)
+  }
+
 
 }

@@ -58,7 +58,7 @@ object HorizontalBoxBlur {
    */
   def parBlur(src: Img, dst: Img, numTasks: Int, radius: Int): Unit = {
     val rangePerTask = Math.max(src.height / numTasks, 1)
-    val tasks = for(startFrom <- 0 to src.height by rangePerTask) yield {
+    val tasks = for(startFrom <- 0 until src.height by rangePerTask) yield {
       common.task { blur(src, dst, startFrom, startFrom + rangePerTask, radius) }
     }
 
