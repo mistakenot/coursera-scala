@@ -55,24 +55,37 @@ object ParallelParenthesesBalancing {
    */
   def parBalance(chars: Array[Char], threshold: Int): Boolean = {
 
-    def traverse(idx: Int, until: Int, depthLeft: Int, depthRight: Int): (Int, Boolean) = {
-      if (until - idx == 0) (depthLeft, depthRight)
-        else if (chars(idx) == '(') traverse(idx + 1, until, depthLeft + 1, depthRight)
-        else if (chars(idx) == ')') traverse(idx + 1, until, depthLeft, depthRight + 1)
-        else traverse(idx + 1, until, depthLeft, depthRight)
-    }
+    def traverse(idx: Int, until: Int, depth: Int): (Int, Boolean) =
+      if (depth < 0) (depth, false)
+      else if (until - idx == 0) (depth, depth == 0)
+      else if (chars(idx) == '(') traverse(idx + 1, until, depth + 1)
+      else if (chars(idx) == ')') traverse(idx + 1, until, depth - 1)
+      else traverse(idx + 1, until, depth)
 
-    def reduce(from: Int, until: Int): (Int, Int) = {
-      if (until - from <= threshold) traverse(from, until, 0, 0)
-      else  {
-        val halfway = (from + until) / 2
-        val ((l1, r1), (l2, r2)) = parallel(reduce(from, halfway), reduce(halfway + 1, until))
-        (l1 + l2, r1 + r2)
+    def traverse2(idx: Int, until: Int, arg1: Int, arg2: Int): (Int, Int) = {
+      if (idx >= until) (arg1, arg2)
+      else {
+        chars(idx) match {
+          case '(' => traverse2(idx + 1, until, arg1 + 1, arg2)
+          case ')' =>
+            if (arg1 > 0) traverse2(idx + 1, until, arg1 - 1, arg2)
+            else traverse2(idx + 1, until, arg1, arg2 + 1)
+          case _ => traverse2(idx + 1, until, arg1, arg2)
+        }
       }
     }
 
-    val (l, r) = reduce(0, chars.length)
-    l == r
+    def reduce(from: Int, until: Int): (Int, Boolean) = {
+      if (until - from <= threshold) traverse(from, until, 0)
+      else  {
+        val halfway = (from + until) / 2
+        val ((lSum, lBalanced), (rSum, rBalanced)) = parallel(reduce(from, halfway), reduce(halfway + 1, until))
+        (lSum + rSum, lBalanced && rBalanced)
+      }
+    }
+
+    val (sum, balanced) = reduce(0, chars.length)
+    balanced || sum == 0
   }
 
   // For those who want more:

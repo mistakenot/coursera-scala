@@ -8,7 +8,7 @@ import org.scalatest.junit.JUnitRunner
 import common._
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory
 
-@RunWith(classOf[JUnitRunner]) 
+@RunWith(classOf[JUnitRunner])
 class LineOfSightSuite extends FunSuite {
   import LineOfSight._
   test("lineOfSight should correctly handle an array of size 4") {
@@ -21,6 +21,11 @@ class LineOfSightSuite extends FunSuite {
   test("upsweepSequential should correctly handle the chunk 1 until 4 of an array of 4 elements") {
     val res = upsweepSequential(Array[Float](0f, 1f, 8f, 9f), 1, 4)
     assert(res == 4f)
+  }
+
+  test("upsweep should correctly handle the chunk 0 until 4 of an array of 4 elements") {
+    val res = upsweep(Array[Float](0f, 1f, 8f, 9f), 0, 4, 2)
+    assert(res.maxPrevious == 4f)
   }
 
 
