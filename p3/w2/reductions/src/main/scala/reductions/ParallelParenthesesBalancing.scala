@@ -75,17 +75,20 @@ object ParallelParenthesesBalancing {
       }
     }
 
-    def reduce(from: Int, until: Int): (Int, Boolean) = {
-      if (until - from <= threshold) traverse(from, until, 0)
+    def reduce(from: Int, until: Int): (Int, Int) = {
+      if (until - from <= threshold) traverse2(from, until, 0, 0)
       else  {
-        val halfway = (from + until) / 2
-        val ((lSum, lBalanced), (rSum, rBalanced)) = parallel(reduce(from, halfway), reduce(halfway + 1, until))
-        (lSum + rSum, lBalanced && rBalanced)
+        val halfway = from + ((until - from) / 2)
+        val ((lLeft, lRight), (rLeft, rRight)) = parallel(
+          reduce(from, halfway),
+          reduce(halfway, until))
+
+        if (lLeft > rRight) (lLeft - rRight + rLeft, lRight)
+        else (rLeft, rRight - lLeft + lRight)
       }
     }
 
-    val (sum, balanced) = reduce(0, chars.length)
-    balanced || sum == 0
+    reduce(0, chars.length) == (0, 0)
   }
 
   // For those who want more:
