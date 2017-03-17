@@ -29,11 +29,8 @@ object WikipediaRanking {
   def occurrencesOfLang(lang: String, rdd: RDD[WikipediaArticle]): Int =
     rdd.aggregate(0)((count, wiki) => if (containsLang(lang, wiki)) count + 1 else count, _ + _)
 
-  def containsLang(lang: String, wikipediaArticle: WikipediaArticle): Boolean = {
-    //val quote = Pattern.quote(lang.toLowerCase)
-    //wikipediaArticle.text.toLowerCase.matches(s"(.*\\b)*(${quote})(\\b.*)*")
+  def containsLang(lang: String, wikipediaArticle: WikipediaArticle): Boolean = 
     wikipediaArticle.text.split(" ").contains(lang)
-  }
 
   /* (1) Use `occurrencesOfLang` to compute the ranking of the languages
    *     (`val langs`) by determining the number of Wikipedia articles that
@@ -46,18 +43,19 @@ object WikipediaRanking {
   def rankLangs(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] =
     langs
       .map(l => (l, occurrencesOfLang(l, rdd)))
-      .sortBy{ case (_, o) => -o }
+      .sortBy(_._2)
+      .reverse
 
   /* Compute an inverted index of the set of articles, mapping each language
    * to the Wikipedia pages in which it occurs.
    */
   def makeIndex(langs: List[String], rdd: RDD[WikipediaArticle]): RDD[(String, Iterable[WikipediaArticle])] =
     rdd
-      .flatMap(article => langs.filter(containsLang(_, article)).map((_, article)))
+      .flatMap(article => 
+        langs
+          .filter(containsLang(_, article))
+          .map((_, article)))
       .groupByKey()
-
-    //langs
-    //  .map(l => (l, rdd.filter(containsLang(l, _))))
 
   /* (2) Compute the language ranking again, but now using the inverted index. Can you notice
    *     a performance improvement?
@@ -69,8 +67,9 @@ object WikipediaRanking {
     index
       .mapValues(_.size)
       .collect()
-      .sortBy(_._2 * -1)
+      .sortBy(_._2)
       .toList
+      .reverse
 
   /* (3) Use `reduceByKey` so that the computation of the index and the ranking is combined.
    *     Can you notice an improvement in performance compared to measuring *both* the computation of the index
@@ -81,11 +80,14 @@ object WikipediaRanking {
    */
   def rankLangsReduceByKey(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] =
     rdd
-      .flatMap(article => langs.filter(containsLang(_, article)).map((_, 1)))
+      .flatMap(article => 
+        langs
+          .filter(containsLang(_, article))
+          .map((_, 1)))
       .reduceByKey(_ + _)
-      .collect()
-      .sortBy(_._2 * -1)
+      .sortBy(_._2)
       .toList
+      .reverse
 
   def main(args: Array[String]) {
 
