@@ -30,8 +30,9 @@ object WikipediaRanking {
     rdd.aggregate(0)((count, wiki) => if (containsLang(lang, wiki)) count + 1 else count, _ + _)
 
   def containsLang(lang: String, wikipediaArticle: WikipediaArticle): Boolean = {
-    val quote = Pattern.quote(lang.toLowerCase)
-    wikipediaArticle.text.toLowerCase.matches(s"(.*\\b)*(${quote})(\\b.*)*")
+    //val quote = Pattern.quote(lang.toLowerCase)
+    //wikipediaArticle.text.toLowerCase.matches(s"(.*\\b)*(${quote})(\\b.*)*")
+    wikipediaArticle.text.split(" ").contains(lang)
   }
 
   /* (1) Use `occurrencesOfLang` to compute the ranking of the languages
@@ -67,8 +68,8 @@ object WikipediaRanking {
   def rankLangsUsingIndex(index: RDD[(String, Iterable[WikipediaArticle])]): List[(String, Int)] =
     index
       .mapValues(_.size)
-      .sortBy(_._2 * -1)
       .collect()
+      .sortBy(_._2 * -1)
       .toList
 
   /* (3) Use `reduceByKey` so that the computation of the index and the ranking is combined.
@@ -82,8 +83,8 @@ object WikipediaRanking {
     rdd
       .flatMap(article => langs.filter(containsLang(_, article)).map((_, 1)))
       .reduceByKey(_ + _)
+      .collect()
       .sortBy(_._2 * -1)
-      .collect
       .toList
 
   def main(args: Array[String]) {
