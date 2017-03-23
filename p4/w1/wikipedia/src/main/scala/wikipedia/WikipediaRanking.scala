@@ -85,6 +85,7 @@ object WikipediaRanking {
           .filter(containsLang(_, article))
           .map((_, 1)))
       .reduceByKey(_ + _)
+      .collect()
       .sortBy(_._2)
       .toList
       .reverse
