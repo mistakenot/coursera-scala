@@ -22,3 +22,6 @@ project/plugins/project/
 
 # Intelli J
 .idea
+
+# data
+*.csv
