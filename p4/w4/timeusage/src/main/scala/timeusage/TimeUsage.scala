@@ -62,15 +62,22 @@ object TimeUsage {
     *         have type Double. None of the fields are nullable.
     * @param columnNames Column names of the DataFrame
     */
-  def dfSchema(columnNames: List[String]): StructType =
-    ???
+  def dfSchema(columnNames: List[String]): StructType = {
+    val first = StructField(columnNames.head, StringType, nullable = false)
+    val rest = columnNames.tail.map(StructField(_, DoubleType, nullable = false))
+    StructType(first :: rest)
+  }
 
 
   /** @return An RDD Row compatible with the schema produced by `dfSchema`
     * @param line Raw fields
     */
-  def row(line: List[String]): Row =
-    ???
+  def row(line: List[String]): Row = {
+    val first = line.head
+    val rest = line.tail.map(_.toDouble)
+    Row(first :: rest)
+  }
+    
 
   /** @return The initial data frame columns partitioned in three groups: primary needs (sleeping, eating, etc.),
     *         work and other (leisure activities)
@@ -88,7 +95,14 @@ object TimeUsage {
     *    “t10”, “t12”, “t13”, “t14”, “t15”, “t16” and “t18” (those which are not part of the previous groups only).
     */
   def classifiedColumns(columnNames: List[String]): (List[Column], List[Column], List[Column]) = {
-    ???
+    val primaryNeedsPrefixes = Set("t01", "t03", "t11", "t1801", "t803")
+    val workingPrefixes = Set("t05", "t1805")
+
+    val primaryColumns = columnNames.filter(n => primaryNeedsPrefixes.exists(n.startsWith(_)))
+    val workingColumns = columnNames.filter(n => workingPrefixes.exists(n.startsWith(_)))
+    val otherColumns = columnNames.diff(primaryColumns).diff(workingColumns)
+ 
+    (primaryColumns.map(col(_)), workingColumns.map(col(_)), otherColumns.map(col(_)))
   }
 
   /** @return a projection of the initial DataFrame such that all columns containing hours spent on primary needs
@@ -127,13 +141,18 @@ object TimeUsage {
     otherColumns: List[Column],
     df: DataFrame
   ): DataFrame = {
-    val workingStatusProjection: Column = ???
-    val sexProjection: Column = ???
-    val ageProjection: Column = ???
+    val workingStatusProjection: Column = 
+      when($"telfs" >= "1" && $"telfs" < 3, lit("working").otherwise(lit("not working"))) as "working"
+    val sexProjection: Column = 
+      when($"tesex" === "1", lit("male").otherwise(lit("female"))) as "sex"
+    val ageProjection: Column = 
+      when($"teage" <= 15 && $"teage" <= 22, lit("young").otherwise(
+        when($"teage" <= 23 && $"teage" <= 55, lit("active").otherwise($"elder")))) as "age"
 
-    val primaryNeedsProjection: Column = ???
-    val workProjection: Column = ???
-    val otherProjection: Column = ???
+    val primaryNeedsProjection: Column = primaryNeedsColumns.reduce((c1, c2) => c1 + c2) / 60 as "primary"
+    val workProjection: Column = workColumns.reduce((c1, c2) => c1 + c2) / 60 as "work"
+    val otherProjection: Column = otherColumns.reduce((c1, c2) => c1 + c2) / 60 as "other"
+
     df
       .select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection, workProjection, otherProjection)
       .where($"telfs" <= 4) // Discard people who are not in labor force
@@ -157,7 +176,13 @@ object TimeUsage {
     * Finally, the resulting DataFrame should be sorted by working status, sex and age.
     */
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
-    ???
+    // |status|sex|age|primary|work|other
+    val grouped = summed
+      .groupBy($"working", $"sex", $"age")
+      .avg("primary", "work", "other")
+      .orderBy("working", "sex", "age")
+
+    grouped
   }
 
   /**
@@ -174,7 +199,8 @@ object TimeUsage {
     * @param viewName Name of the SQL view to use
     */
   def timeUsageGroupedSqlQuery(viewName: String): String =
-    ???
+    s"select 'working', 'sex', 'age', avg('primary'), avg('work'), avg('other') from $viewName " +
+    s"groupBy 'working', 'sex', 'age';"
 
   /**
     * @return A `Dataset[TimeUsageRow]` from the “untyped” `DataFrame`
@@ -184,7 +210,7 @@ object TimeUsage {
     * cast them at the same time.
     */
   def timeUsageSummaryTyped(timeUsageSummaryDf: DataFrame): Dataset[TimeUsageRow] =
-    ???
+    timeUsageSummaryDf.as[TimeUsageRow]
 
   /**
     * @return Same as `timeUsageGrouped`, but using the typed API when possible
